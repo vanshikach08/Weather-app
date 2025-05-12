@@ -4,23 +4,22 @@ import "./App.css";
 
 function App() {
   return (
-    <React.Fragment>
+    <>
       <div className="container">
         <CurrentLocation />
       </div>
-      <div className="footer-info">
+      <footer className="footer-info">
         Developed by{" "}
-        <a 
-          target="_blank" 
+        <a
           href="https://github.com/vanshikach08"
-          rel="noopener noreferrer" // Fixed security issue
+          target="_blank"
+          rel="noopener noreferrer"
         >
           Vanshika Choudhary
-        </a>{" "}
-      </div>
-    </React.Fragment>
+        </a>
+      </footer>
+    </>
   );
 }
 
 export default App;
-
