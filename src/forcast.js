@@ -8,33 +8,34 @@ function Forcast(props) {
   const [error, setError] = useState("");
   const [weather, setWeather] = useState({});
 
-  // Wrapped in useCallback to prevent useEffect re-running every render
   const search = useCallback((city) => {
     axios
       .get(
-        `${apiKeys.base}weather?q=${city !== "[object Object]" ? city : query}&units=metric&APPID=${apiKeys.key}`
+        `${apiKeys.base}weather?q=${
+          city !== "[object Object]" ? city : query
+        }&units=metric&APPID=${apiKeys.key}`
       )
       .then((response) => {
         setWeather(response.data);
         setQuery("");
       })
-      .catch((error) => {
+      .catch(function (error) {
         console.log(error);
         setWeather("");
         setQuery("");
         setError({ message: "Not Found", query: query });
       });
-  }, [query]); // query is a dependency because it's used inside
-
-  useEffect(() => {
-    search("Delhi");
-  }, [search]); // Now safe to include search as a dependency
+  }, [query]);
 
   const defaults = {
     color: "white",
     size: 112,
     animate: true,
   };
+
+  useEffect(() => {
+    search("Delhi");
+  }, [search]);
 
   return (
     <div className="forecast">
@@ -58,9 +59,9 @@ function Forcast(props) {
           />
           <div className="img-box">
             <img
+              alt="Search"
               src="https://images.avishkaar.cc/workflow/newhp/search-white.png"
-              onClick={() => search(query)}
-              alt="Search icon"
+              onClick={search}
             />
           </div>
         </div>
@@ -73,8 +74,8 @@ function Forcast(props) {
                 </p>
                 <img
                   className="temp"
+                  alt="Weather Icon"
                   src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}.png`}
-                  alt={weather.weather[0].main}
                 />
               </li>
               <li>
