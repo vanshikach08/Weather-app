@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import CurrentLocation from "./currentLocation";
 import "./App.css";
 
@@ -9,11 +9,14 @@ function App() {
         <CurrentLocation />
       </div>
       <div className="footer-info">
-         Developed by{" "}
-        <a target="_blank" href="https://github.com/vanshikach08">
+        Developed by{" "}
+        <a 
+          target="_blank" 
+          href="https://github.com/vanshikach08"
+          rel="noopener noreferrer" // Fixed security issue
+        >
           Vanshika Choudhary
         </a>{" "}
-       
       </div>
     </React.Fragment>
   );
