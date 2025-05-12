@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import apiKeys from "./apiKeys";
 import ReactAnimatedWeather from "react-animated-weather";
@@ -8,8 +8,8 @@ function Forcast(props) {
   const [error, setError] = useState("");
   const [weather, setWeather] = useState({});
 
-  // Search function for fetching weather based on city
-  const search = (city) => {
+  // Wrapped in useCallback to prevent useEffect re-running every render
+  const search = useCallback((city) => {
     axios
       .get(
         `${apiKeys.base}weather?q=${city !== "[object Object]" ? city : query}&units=metric&APPID=${apiKeys.key}`
@@ -18,32 +18,23 @@ function Forcast(props) {
         setWeather(response.data);
         setQuery("");
       })
-      .catch(function (error) {
+      .catch((error) => {
         console.log(error);
         setWeather("");
         setQuery("");
         setError({ message: "Not Found", query: query });
       });
-  };
+  }, [query]); // query is a dependency because it's used inside
 
-  // Format numbers to add zero in front of single digits
-  function checkTime(i) {
-    if (i < 10) {
-      i = "0" + i;
-    }
-    return i;
-  }
+  useEffect(() => {
+    search("Delhi");
+  }, [search]); // Now safe to include search as a dependency
 
   const defaults = {
     color: "white",
     size: 112,
     animate: true,
   };
-
-  // Fetch weather for "Delhi" on component mount
-  useEffect(() => {
-    search("Delhi");
-  }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
     <div className="forecast">
@@ -68,13 +59,13 @@ function Forcast(props) {
           <div className="img-box">
             <img
               src="https://images.avishkaar.cc/workflow/newhp/search-white.png"
+              onClick={() => search(query)}
               alt="Search icon"
-              onClick={() => search(query)} // Corrected search trigger
             />
           </div>
         </div>
         <ul>
-          {weather.main ? (
+          {typeof weather.main !== "undefined" ? (
             <div>
               <li className="cityHead">
                 <p>
@@ -83,13 +74,13 @@ function Forcast(props) {
                 <img
                   className="temp"
                   src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}.png`}
-                  alt="Weather icon" // Added alt text for accessibility
+                  alt={weather.weather[0].main}
                 />
               </li>
               <li>
                 Temperature{" "}
                 <span className="temp">
-                  {Math.round(weather.main.temp)}°C ({weather.weather[0].main})
+                  {Math.round(weather.main.temp)}°c ({weather.weather[0].main})
                 </span>
               </li>
               <li>
