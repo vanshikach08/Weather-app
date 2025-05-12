@@ -5,19 +5,19 @@ import loader from "./images/WeatherIcons.gif";
 import ReactAnimatedWeather from "react-animated-weather";
 
 const dateBuilder = (d) => {
-  let months = [
+  const months = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December",
   ];
-  let days = [
+  const days = [
     "Sunday", "Monday", "Tuesday", "Wednesday",
     "Thursday", "Friday", "Saturday",
   ];
 
-  let day = days[d.getDay()];
-  let date = d.getDate();
-  let month = months[d.getMonth()];
-  let year = d.getFullYear();
+  const day = days[d.getDay()];
+  const date = d.getDate();
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
 
   return `${day}, ${date} ${month} ${year}`;
 };
@@ -43,7 +43,6 @@ class Weather extends React.Component {
   state = {
     lat: undefined,
     lon: undefined,
-    errorMessage: undefined,
     temperatureC: undefined,
     temperatureF: undefined,
     city: undefined,
@@ -51,9 +50,7 @@ class Weather extends React.Component {
     humidity: undefined,
     description: undefined,
     icon: "CLEAR_DAY",
-    sunrise: undefined,
-    sunset: undefined,
-    errorMsg: undefined,
+    main: undefined,
   };
 
   componentDidMount() {
@@ -62,10 +59,10 @@ class Weather extends React.Component {
         .then((position) => {
           this.getWeather(position.coords.latitude, position.coords.longitude);
         })
-        .catch((err) => {
+        .catch(() => {
           this.getWeather(28.67, 77.22);
           alert(
-            "You have disabled location service. Allow 'This APP' to access your location. Your current location will be used for calculating Real time weather."
+            "You have disabled location service. Allow 'This App' to access your location. Your current location will be used for calculating real-time weather."
           );
         });
     } else {
@@ -83,58 +80,69 @@ class Weather extends React.Component {
   }
 
   getPosition = (options) => {
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(resolve, reject, options);
     });
   };
 
   getWeather = async (lat, lon) => {
-    const api_call = await fetch(
-      `${apiKeys.base}weather?lat=${lat}&lon=${lon}&units=metric&APPID=${apiKeys.key}`
-    );
-    const data = await api_call.json();
-    this.setState({
-      lat: lat,
-      lon: lon,
-      city: data.name,
-      temperatureC: Math.round(data.main.temp),
-      temperatureF: Math.round(data.main.temp * 1.8 + 32),
-      humidity: data.main.humidity,
-      main: data.weather[0].main,
-      country: data.sys.country,
-    });
+    try {
+      const api_call = await fetch(
+        `${apiKeys.base}weather?lat=${lat}&lon=${lon}&units=metric&APPID=${apiKeys.key}`
+      );
+      const data = await api_call.json();
 
-    switch (this.state.main) {
-      case "Haze": this.setState({ icon: "CLEAR_DAY" }); break;
-      case "Clouds": this.setState({ icon: "CLOUDY" }); break;
-      case "Rain": this.setState({ icon: "RAIN" }); break;
-      case "Snow": this.setState({ icon: "SNOW" }); break;
-      case "Dust": this.setState({ icon: "WIND" }); break;
-      case "Drizzle": this.setState({ icon: "SLEET" }); break;
-      case "Fog": this.setState({ icon: "FOG" }); break;
-      case "Smoke": this.setState({ icon: "FOG" }); break;
-      case "Tornado": this.setState({ icon: "WIND" }); break;
-      default: this.setState({ icon: "CLEAR_DAY" });
+      const weatherMain = data.weather[0].main;
+
+      let icon = "CLEAR_DAY";
+      switch (weatherMain) {
+        case "Haze": icon = "CLEAR_DAY"; break;
+        case "Clouds": icon = "CLOUDY"; break;
+        case "Rain": icon = "RAIN"; break;
+        case "Snow": icon = "SNOW"; break;
+        case "Dust": icon = "WIND"; break;
+        case "Drizzle": icon = "SLEET"; break;
+        case "Fog":
+        case "Smoke": icon = "FOG"; break;
+        case "Tornado": icon = "WIND"; break;
+        default: icon = "CLEAR_DAY";
+      }
+
+      this.setState({
+        lat,
+        lon,
+        city: data.name,
+        temperatureC: Math.round(data.main.temp),
+        temperatureF: Math.round(data.main.temp * 1.8 + 32),
+        humidity: data.main.humidity,
+        main: weatherMain,
+        country: data.sys.country,
+        icon,
+      });
+    } catch (error) {
+      console.error("Failed to fetch weather data:", error);
     }
   };
 
   render() {
-    if (this.state.temperatureC) {
+    const { temperatureC, city, country, icon, main } = this.state;
+
+    if (temperatureC) {
       return (
-        <React.Fragment>
+        <>
           <div className="city">
             <div className="title">
-              <h2>{this.state.city}</h2>
-              <h3>{this.state.country}</h3>
+              <h2>{city}</h2>
+              <h3>{country}</h3>
             </div>
             <div className="mb-icon">
               <ReactAnimatedWeather
-                icon={this.state.icon}
+                icon={icon}
                 color={defaults.color}
                 size={defaults.size}
                 animate={defaults.animate}
               />
-              <p>{this.state.main}</p>
+              <p>{main}</p>
             </div>
             <div className="date-time">
               <div className="dmy">
@@ -143,28 +151,32 @@ class Weather extends React.Component {
               </div>
               <div className="temperature">
                 <p>
-                  {this.state.temperatureC}°<span>C</span>
+                  {temperatureC}°<span>C</span>
                 </p>
               </div>
             </div>
           </div>
-          <Forcast icon={this.state.icon} weather={this.state.main} />
-        </React.Fragment>
-      );
-    } else {
-      return (
-        <React.Fragment>
-          <img src={loader} style={{ width: "50%", WebkitUserDrag: "none" }} alt="Loading weather icon" />
-          <h3 style={{ color: "white", fontSize: "22px", fontWeight: "600" }}>
-            Detecting your location
-          </h3>
-          <h3 style={{ color: "white", marginTop: "10px" }}>
-            Your current location will be displayed on the App <br />
-            & used for calculating Real time weather.
-          </h3>
-        </React.Fragment>
+          <Forcast icon={icon} weather={main} />
+        </>
       );
     }
+
+    return (
+      <>
+        <img
+          src={loader}
+          style={{ width: "50%", WebkitUserDrag: "none" }}
+          alt="Loading weather icon"
+        />
+        <h3 style={{ color: "white", fontSize: "22px", fontWeight: "600" }}>
+          Detecting your location
+        </h3>
+        <h3 style={{ color: "white", marginTop: "10px" }}>
+          Your current location will be displayed on the App <br />
+          & used for calculating Real time weather.
+        </h3>
+      </>
+    );
   }
 }
 
